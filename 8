@@ -1,0 +1,240 @@
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Data;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows;
+
+namespace WpfAppDB_6
+{
+    
+    public partial class App : Application
+    {
+    }
+}
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+
+namespace WpfAppDB_6
+{
+    class AppContext : DbContext
+    {
+        public DbSet<Models.Apartment> Apartment  { get; set; }
+        public DbSet<Models.House> House { get; set; }
+        public DbSet<Models.ResidentialComplex> ResidentialComplex { get; set; }
+        public AppContext()
+        {
+            Database.EnsureCreated();
+        }
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseMySQL("server=192.168.4.211;userId=student;password=12345;charset=utf8;database=new_db");
+        }
+    }
+}
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+
+namespace WpfAppDB_6
+{
+    public partial class MainWindow : Window
+    {
+        public MainWindow()
+        {
+            InitializeComponent();
+        }
+    }
+}
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+
+namespace WpfAppDB_6.Pages
+{
+    public partial class PageApp : Page
+    {
+        public PageApp()
+        {
+            InitializeComponent();
+        }
+
+        private void Button_House(object sender, RoutedEventArgs e)
+        {
+            this.NavigationService.Content = new Pages.PageHouse();
+        }
+
+        private void Button_Apartament(object sender, RoutedEventArgs e)
+        {
+
+        }
+    }
+}
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+using Microsoft.EntityFrameworkCore;
+
+namespace WpfAppDB_6.Pages
+{
+    public partial class PageHouse : Page
+    {
+        AppContext db = new AppContext();
+        public PageHouse()
+        {
+            InitializeComponent();
+            var data = from h in db.House
+                       join r in db.ResidentialComplex
+                       on h.ResidentialComplexId equals r.Id
+                       select new
+                       {
+                           Resident = r.Name,
+                           Street = h.Street,
+                           Number = h.Number,
+                           Status = r.Status
+                       };
+            dataGrid.ItemsSource = data.ToList();
+        }
+
+        private void Button_Back(object sender, RoutedEventArgs e)
+        {
+            this.NavigationService.Content = new Pages.PageApp();
+        }
+
+        private void Button_Save(object sender, RoutedEventArgs e)
+        {
+            db.SaveChanges();
+        }
+
+        private void Button_Search(object sender, RoutedEventArgs e)
+        {
+            var list = from h in db.House
+                       join r in db.ResidentialComplex
+                       on h.ResidentialComplexId equals r.Id
+                       select new
+                       {
+                           Resident = r.Name,
+                           Street = h.Street,
+                           Number = h.Number,
+                           Status = r.Status
+                       };
+            var temp = list.ToList();
+            if (resident.Text != "")
+            {
+                list = list.Where(l => l.Resident.ToLower().Contains(resident.Text.ToLower()));
+            }
+            if (street.Text != "")
+            {
+                list = list.Where(l => l.Street.ToLower().Contains(street.Text.ToLower()));
+            }
+
+            if (list.SequenceEqual(temp))
+            {
+                dataGrid.ItemsSource = temp;
+            }
+            else
+            {
+                dataGrid.ItemsSource = list;
+            }
+        }
+    }
+}
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WpfAppDB_6.Models
+{
+    class Apartment
+    {
+        public int Id { get; set; }
+        public int HouseId { get; set; }
+        public string Number { get; set; }
+        public double Area { get; set; }
+        public int CountOfRooms { get; set; }
+        public int Section { get; set; }
+        public int Floor { get; set; }
+        public int IsSold { get; set; }
+        public int BuildingCost { get; set; }
+        public int ApartmentValueAdded { get; set; }
+        public int IsDeleted { get; set; }
+    }
+}
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WpfAppDB_6.Models
+{
+    class House
+    {
+        public int Id { get; set; }
+        public int ResidentialComplexId { get; set; }
+        public string Street { get; set; }
+        public string Number { get; set; }
+        public int BuildingCost { get; set; }
+        public int HouseValueAdded { get; set; }
+        public int IsDeleted { get; set; }
+    }
+}
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WpfAppDB_6.Models
+{
+    class ResidentialComplex
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string City { get; set; }
+        public string Status { get; set; }
+        public int BuildingCost { get; set; }
+        public int ComplexValueAdded { get; set; }
+        public int IsDeleted { get; set; }
+    }
+}
